@@ -23,6 +23,41 @@ import org.junit.Test
 class CityApiTest {
 
     @Test
+    fun `plaka aramasi Turkiye iliyle sinirlanir ve isim sorgusuna cevrilir`() = runTest {
+        val repo = OpenMeteoCityRepository(api, StandardTestDispatcher(testScheduler))
+        listOf("6", "06").forEach { query ->
+            server.enqueue(
+                MockResponse().setBody(
+                    """{"results":[
+                {"id":1,"name":"Ankara","country_code":"TR","feature_code":"PPLC"},
+                {"id":2,"name":"Ankara","country_code":"US","feature_code":"PPLA"},
+                {"id":3,"name":"Ankara İlçesi","country_code":"TR","feature_code":"PPLA2"}
+            ]}"""
+                )
+            )
+            assertEquals(listOf(1L), repo.search(query, false).map { it.id })
+            val url = checkNotNull(server.takeRequest().requestUrl)
+            assertEquals("Ankara", url.queryParameter("name"))
+            assertEquals("TR", url.queryParameter("countryCode"))
+        }
+    }
+
+    @Test
+    fun `gecersiz plaka APIye gonderilmez`() = runTest {
+        val repo = OpenMeteoCityRepository(api, StandardTestDispatcher(testScheduler))
+        listOf("00", "82", "99999999999999").forEach { assertTrue(repo.search(it).isEmpty()) }
+        assertEquals(0, server.requestCount)
+    }
+
+    @Test
+    fun `il merkezinin adi farkliysa plaka dogru sehre gider`() = runTest {
+        server.enqueue(MockResponse().setBody("""{"results":[{"id":1,"name":"İzmit","country_code":"TR","feature_code":"PPLA"}]}"""))
+        val repo = OpenMeteoCityRepository(api, StandardTestDispatcher(testScheduler))
+        assertEquals("İzmit", repo.search("41").single().name)
+        assertEquals("İzmit", checkNotNull(server.takeRequest().requestUrl).queryParameter("name"))
+    }
+
+    @Test
     fun `Turkiye il filtresi ilceleri ve yabanci sehirleri dislar`() = runTest {
         server.enqueue(
             MockResponse().setBody(

@@ -2,6 +2,7 @@ package com.kampplus.hava.ui.city
 
 import androidx.lifecycle.SavedStateHandle
 import com.kampplus.hava.testing.FakeCityRepository
+import com.kampplus.hava.testing.FakeWeatherRepository
 import com.kampplus.hava.testing.MainDispatcherRule
 import com.kampplus.hava.testing.sampleCity
 import com.kampplus.hava.ui.LoadState
@@ -34,6 +35,39 @@ class CityViewModelTest {
     private val repository = FakeCityRepository()
 
     private fun createViewModel() = CityViewModel(repository)
+
+    @Test
+    fun `kasaba gunlugu tekrar yuklenmez hata sonrasi tekrar denenebilir`() = runTest {
+        val weather = FakeWeatherRepository(error = IOException("offline"))
+        val vm = CityViewModel(repository, SavedStateHandle(), weather)
+        vm.loadVillage(sampleCity())
+        advanceUntilIdle()
+        assertTrue(vm.villageWeather.value?.forecast is LoadState.Error)
+        vm.loadVillage(sampleCity())
+        advanceUntilIdle()
+        assertEquals(1, weather.callCount)
+        weather.error = null
+        vm.retryVillage()
+        advanceUntilIdle()
+        assertEquals(2, weather.callCount)
+        assertTrue(vm.villageWeather.value?.forecast is LoadState.Success)
+    }
+
+    @Test
+    fun `kasaba temizlenince bekleyen yanit eski sehri geri getirmez`() = runTest {
+        val weather = object : com.kampplus.hava.data.WeatherRepository {
+            override suspend fun getForecast(latitude: Double, longitude: Double): com.kampplus.hava.model.Forecast {
+                kotlinx.coroutines.delay(1000)
+                return com.kampplus.hava.testing.sampleForecast()
+            }
+        }
+        val vm = CityViewModel(repository, SavedStateHandle(), weather)
+        vm.loadVillage(sampleCity())
+        advanceTimeBy(100)
+        vm.clearVillage()
+        advanceUntilIdle()
+        assertEquals(null, vm.villageWeather.value)
+    }
 
     @Test
     fun `hizli yazarken sadece son sorgu aranir`() = runTest {

@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.kampplus.hava.data.CityCatalog
 import com.kampplus.hava.data.CityRepository
 import com.kampplus.hava.data.OpenMeteoCityRepository
+import com.kampplus.hava.data.OpenMeteoWeatherRepository
+import com.kampplus.hava.data.WeatherRepository
 import com.kampplus.hava.model.City
 import com.kampplus.hava.ui.LoadState
 import java.io.IOException
@@ -21,7 +23,8 @@ import retrofit2.HttpException
 
 class CityViewModel(
     private val repository: CityRepository = OpenMeteoCityRepository(),
-    private val savedStateHandle: SavedStateHandle = SavedStateHandle()
+    private val savedStateHandle: SavedStateHandle = SavedStateHandle(),
+    private val weatherRepository: WeatherRepository = OpenMeteoWeatherRepository()
 ) : ViewModel() {
     constructor(savedStateHandle: SavedStateHandle) : this(OpenMeteoCityRepository(), savedStateHandle)
 
@@ -31,6 +34,34 @@ class CityViewModel(
     private val _uiState = MutableStateFlow<LoadState<List<City>>>(LoadState.Loading)
     val uiState = _uiState.asStateFlow()
     private var searchJob: Job? = null
+    private var villageJob: Job? = null
+    private val _villageWeather = MutableStateFlow<VillageWeather?>(null)
+    val villageWeather = _villageWeather.asStateFlow()
+
+    fun loadVillage(city: City, force: Boolean = false) {
+        if (!force && _villageWeather.value?.city == city) return
+        villageJob?.cancel()
+        _villageWeather.value = VillageWeather(city, LoadState.Loading)
+        villageJob = viewModelScope.launch {
+            val forecast = try {
+                LoadState.Success(weatherRepository.getForecast(city.latitude, city.longitude))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                LoadState.Error("Kasabanın hava bilgisi alınamadı. Bağlantını kontrol edip tekrar dene.")
+            }
+            _villageWeather.value = VillageWeather(city, forecast)
+        }
+    }
+
+    fun clearVillage() {
+        villageJob?.cancel()
+        _villageWeather.value = null
+    }
+
+    fun retryVillage() {
+        _villageWeather.value?.city?.let { loadVillage(it, force = true) }
+    }
 
     init {
         search()

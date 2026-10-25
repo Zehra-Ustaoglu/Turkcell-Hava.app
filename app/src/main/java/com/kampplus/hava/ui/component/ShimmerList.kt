@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -47,6 +48,10 @@ fun ShimmerList(modifier: Modifier = Modifier, itemCount: Int = 6) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            GrowingPlant()
+            Text("Yeni bir gökyüzü aranıyor…", style = MaterialTheme.typography.labelLarge)
+        }
         // Gerçek kartlarla aynı ölçülerde boş kartlar çizilir.
         repeat(itemCount) {
             Card(modifier = Modifier.fillMaxWidth()) {

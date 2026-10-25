@@ -2,11 +2,14 @@ package com.kampplus.hava.ui.city
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,12 +21,15 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +45,9 @@ import com.kampplus.hava.model.City
 import com.kampplus.hava.ui.LoadState
 import com.kampplus.hava.ui.component.EmptyView
 import com.kampplus.hava.ui.component.ErrorView
+import com.kampplus.hava.ui.component.FarmBanner
 import com.kampplus.hava.ui.component.ShimmerList
+import com.kampplus.hava.ui.component.VillageJournal
 import com.kampplus.hava.ui.theme.HavaTheme
 
 /**
@@ -58,6 +66,12 @@ fun CityRoute(onCityClick: (City) -> Unit, modifier: Modifier = Modifier, viewMo
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val selectedCityId by viewModel.selectedCityId.collectAsStateWithLifecycle()
     val onlyTurkishProvinces by viewModel.onlyTurkishProvinces.collectAsStateWithLifecycle()
+    val villageWeather by viewModel.villageWeather.collectAsStateWithLifecycle()
+    val cities = (uiState as? LoadState.Success)?.data.orEmpty()
+    val currentCity = cities.firstOrNull { it.id == selectedCityId } ?: cities.firstOrNull()
+    LaunchedEffect(currentCity) {
+        if (currentCity == null) viewModel.clearVillage() else viewModel.loadVillage(currentCity)
+    }
 
     CityScreen(
         query = query,
@@ -71,6 +85,8 @@ fun CityRoute(onCityClick: (City) -> Unit, modifier: Modifier = Modifier, viewMo
         selectedCityId = selectedCityId,
         onlyTurkishProvinces = onlyTurkishProvinces,
         onProvinceFilterChange = viewModel::onProvinceFilterChange,
+        villageWeather = villageWeather,
+        onRetryVillage = viewModel::retryVillage,
         modifier = modifier
     )
 }
@@ -91,11 +107,26 @@ fun CityScreen(
     modifier: Modifier = Modifier,
     selectedCityId: Long? = null,
     onlyTurkishProvinces: Boolean = false,
-    onProvinceFilterChange: (Boolean) -> Unit = {}
+    onProvinceFilterChange: (Boolean) -> Unit = {},
+    villageWeather: VillageWeather? = null,
+    onRetryVillage: () -> Unit = {}
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) }
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge)
+                        Text("GÖKYÜZÜNDEN KASABANA", style = MaterialTheme.typography.labelSmall)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            )
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -116,20 +147,32 @@ fun CityScreen(
                 Text("Yalnızca Türkiye illeri")
                 Switch(checked = onlyTurkishProvinces, onCheckedChange = onProvinceFilterChange)
             }
-            if (uiState is LoadState.Success) {
-                Text("${uiState.data.size} şehir bulundu", modifier = Modifier.padding(horizontal = 16.dp))
-            }
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                // Dört durumun tamamı burada karşılanır. `sealed` olduğu için
-                // bir dalı unutursak Kotlin derleme hatası verir.
+            LazyColumn(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item(key = "landscape") {
+                    val code = (villageWeather?.forecast as? LoadState.Success)?.data?.current?.weatherCode ?: 0
+                    FarmBanner(modifier = Modifier.fillMaxWidth(), weatherCode = code)
+                }
+                villageWeather?.let { weather ->
+                    item(key = "journal") { VillageJournal(weather = weather, onRetry = onRetryVillage) }
+                }
                 when (uiState) {
-                    LoadState.Loading -> ShimmerList()
-                    is LoadState.Success -> CityList(cities = uiState.data, onCityClick = onCityClick, selectedCityId = selectedCityId)
-                    LoadState.Empty -> EmptyView(
-                        title = "Şehir bulunamadı",
-                        message = "Yazımı kontrol et ya da başka bir şehir dene."
-                    )
-                    is LoadState.Error -> ErrorView(message = uiState.message, onRetry = onSearch)
+                    LoadState.Loading -> item(key = "loading") { ShimmerList(itemCount = 3) }
+                    is LoadState.Success -> {
+                        item(key = "count") {
+                            Text("${uiState.data.size} şehir · Keşfe çık", style = MaterialTheme.typography.labelLarge)
+                        }
+                        items(uiState.data, key = { "city-${it.id}" }) { city ->
+                            CityCard(city = city, onClick = { onCityClick(city) }, isSelected = city.id == selectedCityId)
+                        }
+                    }
+                    LoadState.Empty -> item(key = "empty") {
+                        EmptyView(title = "Şehir bulunamadı", message = "Bir şehir adı ya da 01–81 arasında plaka kodu dene.")
+                    }
+                    is LoadState.Error -> item(key = "error") { ErrorView(message = uiState.message, onRetry = onSearch) }
                 }
             }
         }
@@ -169,37 +212,6 @@ private fun SearchBar(query: String, onQueryChange: (String) -> Unit, onSearch: 
             }
         )
     )
-}
-
-/**
- * Kaydırılabilir şehir listesi.
- *
- * `LazyColumn` tembeldir: yüzlerce şehir olsa da yalnızca ekranda görünen satırlar
- * çizilir, kaybolanlar geri dönüştürülür.
- *
- * `key = { it.id }`: listedeki öğeler değiştiğinde Compose hangi satırın hangisi
- * olduğunu bilir; gereksiz yeniden çizim yapmaz.
- */
-@Composable
-private fun CityList(cities: List<City>, onCityClick: (City) -> Unit, modifier: Modifier = Modifier, selectedCityId: Long? = null) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(items = cities, key = { it.id }) { city ->
-            if (city.id < 0) {
-                com.kampplus.hava.CityCard(
-                    name = city.name,
-                    plate = -city.id.toInt(),
-                    onClick = { onCityClick(city) },
-                    isSelected = city.id == selectedCityId
-                )
-            } else {
-                CityCard(city = city, onClick = { onCityClick(city) }, isSelected = city.id == selectedCityId)
-            }
-        }
-    }
 }
 
 @Preview(showBackground = true)

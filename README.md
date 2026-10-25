@@ -1,9 +1,11 @@
-# Hava.app
+# Kasaba Havası
 
-Kotlin ve Jetpack Compose ile şehir arama ve hava tahmini uygulaması. Eğitim referansı: [weather-app](https://github.com/tc-yusufburakdemir/weather-app), `main` / `884c9bf`.
+Kotlin ve Jetpack Compose ile, çiftlik oyunlarından esinlenen özgün piksel temalı şehir arama ve hava tahmini uygulaması. Eğitim referansı: [weather-app](https://github.com/tc-yusufburakdemir/weather-app), `main` / `884c9bf`.
 
 ## Özellikler
 
+- 81 ilin plaka koduyla arama (`34`, `6`, `06`); geçersiz kodlar için boş sonuç.
+- Gerçek hava verisine göre Bugün kasabanda günlüğü ve Çiftlik hazırlığı önerileri.
 - Yazarken 350 ms beklemeli arama; klavyeden Ara ve temizleme düğmesi.
 - Dünya şehirleri veya yalnızca Türkiye illeri; Türkiye filtresi ilçe sonuçlarını dışlar.
 - Arama temizlenince plaka rozetli 10 sabit şehir; seçili şehir vurgusu ve Logcat kaydı.

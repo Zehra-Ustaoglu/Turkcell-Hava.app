@@ -39,9 +39,23 @@ class OpenMeteoCityRepository(
     override suspend fun search(query: String, onlyTurkishProvinces: Boolean): List<City> = withContext(ioDispatcher) {
         // `suspend` tek başına thread değiştirmez. İşi arka plana almak
         // için withContext ile IO dispatcher'ına geçiyoruz.
-        val response = api.search(query.trim(), countryCode = if (onlyTurkishProvinces) "TR" else null)
+        val text = query.trim()
+        val numeric = text.isNotEmpty() && text.all { it in '0'..'9' }
+        val province = ProvincePlates.nameFor(text)
+        if (numeric && province == null) return@withContext emptyList()
+        val restrictToProvinces = onlyTurkishProvinces || province != null
+        val searchName = when (province) {
+            "Kocaeli" -> "İzmit"
+            "Sakarya" -> "Adapazarı"
+            "Hatay" -> "Antakya"
+            else -> province ?: text
+        }
+        val response = api.search(searchName, countryCode = if (restrictToProvinces) "TR" else null)
         // Sonuç bulunamazsa servis "results" alanını hiç göndermez; orEmpty() bunu
         // boş listeye çevirir ve ViewModel bunu "Empty" durumu olarak yorumlar.
-        response.results.orEmpty().filter { !onlyTurkishProvinces || (it.countryCode == "TR" && it.featureCode in listOf("PPLA", "PPLC")) }
+        response.results.orEmpty().filter {
+            (!restrictToProvinces || (it.countryCode == "TR" && it.featureCode in listOf("PPLA", "PPLC"))) &&
+                (province == null || ProvincePlates.plateFor(it) == text.toInt().toString().padStart(2, '0'))
+        }
     }
 }

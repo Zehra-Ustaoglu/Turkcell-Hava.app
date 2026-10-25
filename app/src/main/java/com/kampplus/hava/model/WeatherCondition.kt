@@ -8,10 +8,10 @@ package com.kampplus.hava.model
  * gösteremeyiz; [fromWeatherCode] ile anlaşılır bir görünüme çeviririz.
  */
 enum class WeatherCondition(val emoji: String, val label: String) {
-    CLEAR("☀️", "Açık"),
+    CLEAR("☀️", "Hava açık"),
     MAINLY_CLEAR("🌤️", "Az bulutlu"),
     PARTLY_CLOUDY("⛅", "Parçalı bulutlu"),
-    OVERCAST("☁️", "Kapalı"),
+    OVERCAST("☁️", "Hava kapalı"),
     FOG("🌫️", "Sisli"),
     DRIZZLE("🌦️", "Çisenti"),
     RAIN("🌧️", "Yağmurlu"),

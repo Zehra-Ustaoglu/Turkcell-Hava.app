@@ -1,5 +1,6 @@
 package com.kampplus.hava.ui.forecast
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -25,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -43,6 +46,9 @@ import com.kampplus.hava.model.HourlyForecast
 import com.kampplus.hava.model.WeatherCondition
 import com.kampplus.hava.ui.LoadState
 import com.kampplus.hava.ui.component.ErrorView
+import com.kampplus.hava.ui.component.FarmBanner
+import com.kampplus.hava.ui.component.GrowingPlant
+import com.kampplus.hava.ui.component.PixelWeatherIcon
 import com.kampplus.hava.ui.theme.HavaTheme
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -89,6 +95,7 @@ fun ForecastScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
                 title = { Text(cityName.ifEmpty { stringResource(R.string.detail_title) }) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -109,7 +116,10 @@ fun ForecastScreen(
         ) {
             when (uiState) {
                 // Tek bir kart beklendiği için burada Shimmer yerine basit gösterge yeterli.
-                LoadState.Loading -> CircularProgressIndicator()
+                LoadState.Loading -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    GrowingPlant()
+                    Text("Gökyüzünden haber bekliyoruz…", style = MaterialTheme.typography.bodyMedium)
+                }
                 LoadState.Empty -> ErrorView(message = "Bu şehir için tahmin bulunamadı.")
                 is LoadState.Error -> ErrorView(message = uiState.message, onRetry = onRetry)
                 is LoadState.Success -> ForecastContent(subtitle = subtitle, forecast = uiState.data)
@@ -128,6 +138,11 @@ private fun ForecastContent(subtitle: String, forecast: Forecast, modifier: Modi
             .padding(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        FarmBanner(
+            weatherCode = forecast.current.weatherCode,
+            caption = "Bugün kasabanda · ${WeatherCondition.fromWeatherCode(forecast.current.weatherCode).label}",
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        )
         CurrentWeatherHeader(
             subtitle = subtitle,
             current = forecast.current,
@@ -136,7 +151,7 @@ private fun ForecastContent(subtitle: String, forecast: Forecast, modifier: Modi
         SectionTitle(stringResource(R.string.detail_hourly))
         HourlyRow(hours = forecast.hourly)
         SectionTitle(stringResource(R.string.detail_daily))
-        Card(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Card(modifier = Modifier.padding(horizontal = 16.dp), border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline)) {
             forecast.daily.forEachIndexed { index, day ->
                 // İlk satır hariç her satırın üstüne ayırıcı çizgi.
                 if (index > 0) HorizontalDivider()
@@ -160,13 +175,13 @@ private fun CurrentWeatherHeader(subtitle: String, current: CurrentWeather, modi
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(text = condition.emoji, style = MaterialTheme.typography.displayMedium)
+            PixelWeatherIcon(code = current.weatherCode, modifier = Modifier.size(72.dp))
             Column {
                 Text(text = degrees(current.temperatureC), style = MaterialTheme.typography.displaySmall)
                 Text(text = condition.label, style = MaterialTheme.typography.titleMedium)
             }
         }
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -204,7 +219,7 @@ private fun HourlyRow(hours: List<HourlyForecast>, modifier: Modifier = Modifier
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(items = upcoming, key = { it.time.toString() }) { hour ->
-            Card(modifier = Modifier.width(76.dp)) {
+            Card(modifier = Modifier.width(88.dp), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -213,10 +228,7 @@ private fun HourlyRow(hours: List<HourlyForecast>, modifier: Modifier = Modifier
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(text = hour.time.format(HOUR_FORMAT), style = MaterialTheme.typography.labelMedium)
-                    Text(
-                        text = WeatherCondition.fromWeatherCode(hour.weatherCode).emoji,
-                        style = MaterialTheme.typography.titleLarge
-                    )
+                    PixelWeatherIcon(code = hour.weatherCode)
                     Text(text = degrees(hour.temperatureC), style = MaterialTheme.typography.titleMedium)
                     Text(
                         // Boş string yerine boşluk: kartların yüksekliği eşit kalsın.
@@ -251,11 +263,7 @@ private fun DailyRow(day: DailyForecast, isToday: Boolean, modifier: Modifier = 
             modifier = Modifier.width(44.dp),
             textAlign = TextAlign.End
         )
-        Text(
-            text = WeatherCondition.fromWeatherCode(day.weatherCode).emoji,
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(horizontal = 12.dp)
-        )
+        PixelWeatherIcon(code = day.weatherCode, modifier = Modifier.padding(horizontal = 8.dp).size(32.dp))
         Text(
             text = degrees(day.minTemperatureC),
             style = MaterialTheme.typography.bodyLarge,

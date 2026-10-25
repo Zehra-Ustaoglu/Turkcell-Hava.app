@@ -1,5 +1,6 @@
 package com.kampplus.hava.ui.city
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.kampplus.hava.data.ProvincePlates
 import com.kampplus.hava.model.City
 import com.kampplus.hava.ui.theme.HavaTheme
 
@@ -41,8 +43,9 @@ fun CityCard(city: City, onClick: () -> Unit, modifier: Modifier = Modifier, isS
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
+        border = BorderStroke(2.dp, if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
         )
     ) {
         Row(
@@ -50,7 +53,7 @@ fun CityCard(city: City, onClick: () -> Unit, modifier: Modifier = Modifier, isS
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            CountryBadge(code = city.countryCode)
+            CountryBadge(code = ProvincePlates.plateFor(city) ?: city.countryCode)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = city.name,
@@ -87,9 +90,10 @@ fun CityCard(city: City, onClick: () -> Unit, modifier: Modifier = Modifier, isS
 private fun CountryBadge(code: String?, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.size(44.dp),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        shape = MaterialTheme.shapes.small,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(

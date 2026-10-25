@@ -1,20 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Güneş + bulut: adaptive icon güvenli alanı (66dp) içinde çizilir. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-  android:width="108dp"
-  android:height="108dp"
-  android:viewportWidth="108"
-  android:viewportHeight="108">
-  <path
-    android:fillColor="#FFD54F"
-    android:pathData="M46,44m-12,0a12,12 0,1 1,24 0a12,12 0,1 1,-24 0" />
-  <path
-    android:fillColor="#00000000"
-    android:pathData="M46,26L46,21M46,67L46,62M28,44L23,44M64,44L69,44M33,31L29.5,27.5M59,31L62.5,27.5M33,57L29.5,60.5"
-    android:strokeWidth="3"
-    android:strokeColor="#FFD54F"
-    android:strokeLineCap="round" />
-  <path
-    android:fillColor="#FFFFFF"
-    android:pathData="M44,78L74,78A10,10 0,0 0,74 58A13,13 0,0 0,49.5 60.5A9,9 0,0 0,44 78Z" />
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#F5CE70" android:pathData="M62,24h16v4h4v16h-4v4h-16v-4h-4v-16h4z" />
+    <path android:fillColor="#FFF0AD" android:pathData="M64,28h12v12h-12z" />
+    <path android:fillColor="#577D43" android:pathData="M18,62h72v22h-72zM22,54h18v8h-18zM72,52h14v12h-14z" />
+    <path android:fillColor="#65432E" android:pathData="M33,50h38v29h-38z" />
+    <path android:fillColor="#CF9756" android:pathData="M37,53h30v23h-30z" />
+    <path android:fillColor="#663F31" android:pathData="M28,47h48v6h-48zM34,41h36v6h-36zM40,35h24v6h-24z" />
+    <path android:fillColor="#BA6541" android:pathData="M34,44h36v3h-36zM40,38h24v3h-24z" />
+    <path android:fillColor="#FFDE88" android:pathData="M40,57h7v7h-7zM59,57h5v7h-5z" />
+    <path android:fillColor="#65432E" android:pathData="M50,62h7v14h-7z" />
+    <path android:fillColor="#E8C88F" android:pathData="M50,76h7v9h-7zM21,70h4v11h-4zM29,70h3v11h-3zM20,73h13v3h-13z" />
 </vector>

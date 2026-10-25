@@ -46,8 +46,13 @@ fun ErrorView(message: String, modifier: Modifier = Modifier, onRetry: (() -> Un
             tint = MaterialTheme.colorScheme.error
         )
         Text(
-            text = message,
+            text = "Hava istasyonundan haber yok",
             style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
         onRetry?.let {
