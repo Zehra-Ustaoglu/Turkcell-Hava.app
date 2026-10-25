@@ -25,93 +25,95 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun CityScreen() {
-    val query = rememberSaveable { mutableStateOf("") }
-    val selectedPlate = rememberSaveable { mutableStateOf<Int?>(null) }
-
-    val searchText = query.value.trim()
-
-    val filteredCities = CityCatalog.cities.filter { city ->
-        city.name.contains(searchText, ignoreCase = true) ||
-            city.plate.toString().padStart(2, '0').contains(searchText)
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .safeDrawingPadding()
-            .padding(horizontal = 16.dp)
+    @Composable
+    fun CityScreen(
+        cityViewModel: CityViewModel = viewModel()
     ) {
-        Text(
-            text = "Şehrini keşfet",
-            style = MaterialTheme.typography.headlineMedium
-        )
+        val query = cityViewModel.query.collectAsState()
+        val selectedPlate =
+            cityViewModel.selectedPlate.collectAsState()  // collectAsState(), ViewModel’in yayınladığı değeri Compose’un takip edebileceği state’e dönüştürür. Değer değişince ilgili arayüz güncellenir.
 
-        Text(
-            text = "Bir sonraki durağını bul.",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
-        )
+        val searchText = query.value.trim()
 
-        OutlinedTextField(
-            value = query.value,
-            onValueChange = { newText ->
-                query.value = newText
-            },
-            label = { Text("Şehir veya plaka ara") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
+        val filteredCities = CityCatalog.cities.filter { city ->
+            city.name.contains(searchText, ignoreCase = true) ||
+                city.plate.toString().padStart(2, '0').contains(searchText)
+        }
 
-        Text(
-            text = "${filteredCities.size} şehir bulundu",
-            style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(top = 12.dp)
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .padding(horizontal = 16.dp)
+        ) {
+            Text(
+                text = "Şehrini keşfet",
+                style = MaterialTheme.typography.headlineMedium
+            )
 
-        if (filteredCities.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 32.dp)
-            ) {
-                Text(
-                    text = "Şehir bulunamadı",
-                    style = MaterialTheme.typography.titleMedium
-                )
+            Text(
+                text = "Bir sonraki durağını bul.",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
+            )
 
-                Text(
-                    text = "Başka bir şehir adı veya plaka kodu dene.",
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+            OutlinedTextField(
+                value = query.value,
+                onValueChange = { newText ->
+                    cityViewModel.onQueryChange(newText)
+                },
+                label = { Text("Şehir veya plaka ara") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
 
-                TextButton(
-                    onClick = {
-                        query.value = ""
-                    }
+            Text(
+                text = "${filteredCities.size} şehir bulundu",
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier.padding(top = 12.dp)
+            )
+
+            if (filteredCities.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 32.dp)
                 ) {
-                    Text("Aramayı temizle")
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(top = 12.dp)
-            ) {
-                items(filteredCities) { city ->
-                    CityCard(
-                        name = city.name,
-                        plate = city.plate,
-                        isSelected = selectedPlate.value == city.plate,
-                        onClick = {
-                            selectedPlate.value = if (selectedPlate.value == city.plate) {
-                                null
-                            } else {
-                                city.plate
-                            }
-                            Log.d("CityClick", "Tıklandı: ${city.name}")
-                        }
+                    Text(
+                        text = "Şehir bulunamadı",
+                        style = MaterialTheme.typography.titleMedium
                     )
+
+                    Text(
+                        text = "Başka bir şehir adı veya plaka kodu dene.",
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+
+                    TextButton(
+                        onClick = {
+                            cityViewModel.clearQuery()
+                        }
+                    ) {
+                        Text("Aramayı temizle")
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(top = 12.dp)
+                ) {
+                    items(filteredCities) { city ->
+                        CityCard(
+                            name = city.name,
+                            plate = city.plate,
+                            isSelected = selectedPlate.value == city.plate,
+                            onClick = {
+                                cityViewModel.toggleSelection(city.plate)
+                                Log.d("CityClick", "Tıklandı: ${city.name}")
+                            }
+                        )
+                    }
                 }
             }
         }
