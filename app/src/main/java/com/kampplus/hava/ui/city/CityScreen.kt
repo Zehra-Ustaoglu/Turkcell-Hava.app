@@ -1,114 +1,112 @@
 package com.kampplus.hava.ui.city
 
-import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import com.kampplus.hava.CityCard
-import com.kampplus.hava.data.CityCatalog
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.ui.unit.dp
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-    @Composable
-    fun CityScreen(
-        cityViewModel: CityViewModel = viewModel()
+import com.kampplus.hava.ui.LoadState
+
+@Composable
+fun CityScreen(
+    cityViewModel: CityViewModel = viewModel()
+) {
+    val query = cityViewModel.query.collectAsState()
+    val selectedCityId = cityViewModel.selectedCityId.collectAsState()
+    val uiState = cityViewModel.uiState.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .safeDrawingPadding()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        val query = cityViewModel.query.collectAsState()
-        val selectedPlate =
-            cityViewModel.selectedPlate.collectAsState()  // collectAsState(), ViewModel’in yayınladığı değeri Compose’un takip edebileceği state’e dönüştürür. Değer değişince ilgili arayüz güncellenir.
+        Text(
+            text = "Şehrini keşfet",
+            style = MaterialTheme.typography.headlineMedium
+        )
 
-        val searchText = query.value.trim()
+        Text(
+            text = "Dünyanın şehirlerini keşfet.",
+            style = MaterialTheme.typography.bodyMedium
+        )
 
-        val filteredCities = CityCatalog.cities.filter { city ->
-            city.name.contains(searchText, ignoreCase = true) ||
-                city.plate.toString().padStart(2, '0').contains(searchText)
+        OutlinedTextField(
+            value = query.value,
+            onValueChange = { cityViewModel.onQueryChange(it) },
+            label = { Text("Şehir ara") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Button(
+            onClick = { cityViewModel.search() },
+            enabled = query.value.isNotBlank() &&
+                uiState.value != LoadState.Loading,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Ara")
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .padding(horizontal = 16.dp)
-        ) {
-            Text(
-                text = "Şehrini keşfet",
-                style = MaterialTheme.typography.headlineMedium
-            )
+        when (val state = uiState.value) {
+            LoadState.Loading -> {
+                CircularProgressIndicator()
+                Text("Şehirler aranıyor…")
+            }
 
-            Text(
-                text = "Bir sonraki durağını bul.",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
-            )
+            is LoadState.Success -> {
+                Text("${state.data.size} şehir bulundu")
 
-            OutlinedTextField(
-                value = query.value,
-                onValueChange = { newText ->
-                    cityViewModel.onQueryChange(newText)
-                },
-                label = { Text("Şehir veya plaka ara") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Text(
-                text = "${filteredCities.size} şehir bulundu",
-                style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(top = 12.dp)
-            )
-
-            if (filteredCities.isEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 32.dp)
-                ) {
-                    Text(
-                        text = "Şehir bulunamadı",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    Text(
-                        text = "Başka bir şehir adı veya plaka kodu dene.",
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-
-                    TextButton(
-                        onClick = {
-                            cityViewModel.clearQuery()
-                        }
-                    ) {
-                        Text("Aramayı temizle")
-                    }
-                }
-            } else {
                 LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(top = 12.dp)
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(filteredCities) { city ->
-                        CityCard(
-                            name = city.name,
-                            plate = city.plate,
-                            isSelected = selectedPlate.value == city.plate,
+                    items(
+                        items = state.data,
+                        key = { city -> city.id }
+                    ) { city ->
+                        ApiCityCard(
+                            city = city,
+                            isSelected = selectedCityId.value == city.id,
                             onClick = {
-                                cityViewModel.toggleSelection(city.plate)
-                                Log.d("CityClick", "Tıklandı: ${city.name}")
+                                cityViewModel.toggleSelection(city.id)
                             }
                         )
                     }
                 }
             }
+
+            LoadState.Empty -> {
+                Text("Bir şehir adı yazıp Ara düğmesine dokun.")
+            }
+
+            is LoadState.Error -> {
+                Text(
+                    text = state.message,
+                    color = MaterialTheme.colorScheme.error
+                )
+
+                TextButton(
+                    onClick = { cityViewModel.search() }
+                ) {
+                    Text("Tekrar dene")
+                }
+            }
         }
     }
+}
