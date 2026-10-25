@@ -18,11 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.kampplus.hava.model.ApiCity
 
 @Composable
-fun ApiCityCard(
-    city: ApiCity,
-    onClick: () -> Unit,
-    isSelected: Boolean = false
-) {
+fun ApiCityCard(city: ApiCity, onClick: () -> Unit, isSelected: Boolean = false) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -44,7 +40,7 @@ fun ApiCityCard(
                 color = MaterialTheme.colorScheme.secondaryContainer
             ) {
                 Text(
-                    text = city.countryCode ?: "—",  // ülke kodu gelemzse - kullanılır
+                    text = city.countryCode ?: "—", // ülke kodu gelemzse - kullanılır
                     modifier = Modifier.padding(12.dp)
                 )
             }

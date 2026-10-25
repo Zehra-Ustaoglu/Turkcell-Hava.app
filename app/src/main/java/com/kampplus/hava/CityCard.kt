@@ -1,30 +1,30 @@
 package com.kampplus.hava
 
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.kampplus.hava.ui.theme.HavaTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.ui.Alignment
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.CardDefaults
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Icon
 
 @Composable
-fun CityCard(name : String, plate : Int, onClick: () -> Unit, isSelected: Boolean = false) {
+fun CityCard(name: String, plate: Int, onClick: () -> Unit, isSelected: Boolean = false) {
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(
@@ -58,6 +58,7 @@ fun CityCard(name : String, plate : Int, onClick: () -> Unit, isSelected: Boolea
         }
     }
 }
+
 @Composable
 private fun PlateBadge(plate: Int) {
     Surface(
@@ -79,5 +80,6 @@ private fun PlateBadge(plate: Int) {
 @Composable
 fun CityCardPreview() {
     HavaTheme {
-        CityCard(name = "Ankara", plate = 6, onClick = {})    }
+        CityCard(name = "Ankara", plate = 6, onClick = {})
+    }
 }

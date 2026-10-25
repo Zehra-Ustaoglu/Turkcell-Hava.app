@@ -1,90 +1,83 @@
 package com.kampplus.hava.ui.city
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.StateFlow
 import androidx.lifecycle.viewModelScope
+import com.kampplus.hava.data.CityCatalog
 import com.kampplus.hava.data.CityRepository
-import com.kampplus.hava.model.ApiCity
+import com.kampplus.hava.data.OpenMeteoCityRepository
+import com.kampplus.hava.model.City
 import com.kampplus.hava.ui.LoadState
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
 class CityViewModel(
-    private val savedStateHandle: SavedStateHandle
+    private val repository: CityRepository = OpenMeteoCityRepository(),
+    private val savedStateHandle: SavedStateHandle = SavedStateHandle()
 ) : ViewModel() {
+    constructor(savedStateHandle: SavedStateHandle) : this(OpenMeteoCityRepository(), savedStateHandle)
 
-    val query: StateFlow<String> =
-        savedStateHandle.getStateFlow("query", "")
+    val query: StateFlow<String> = savedStateHandle.getStateFlow("query", "İstanbul")
+    val selectedCityId: StateFlow<Long?> = savedStateHandle.getStateFlow("selectedCityId", null)
+    val onlyTurkishProvinces: StateFlow<Boolean> = savedStateHandle.getStateFlow("onlyTurkishProvinces", false)
+    private val _uiState = MutableStateFlow<LoadState<List<City>>>(LoadState.Loading)
+    val uiState = _uiState.asStateFlow()
+    private var searchJob: Job? = null
 
-    val selectedCityId: StateFlow<Long?> =
-        savedStateHandle.getStateFlow<Long?>("selectedCityId", null)
+    init {
+        search()
+    }
 
     fun onQueryChange(newQuery: String) {
         savedStateHandle["query"] = newQuery
+        scheduleSearch(350)
     }
 
-    fun toggleSelection(cityId: Long) {
-        savedStateHandle["selectedCityId"] =
-            if (selectedCityId.value == cityId) {
-                null
-            } else {
-                cityId
-            }
+    fun onProvinceFilterChange(enabled: Boolean) {
+        savedStateHandle["onlyTurkishProvinces"] = enabled
+        search()
     }
 
-    fun search() {
-        val searchText = query.value.trim()
+    fun selectCity(city: City) {
+        savedStateHandle["selectedCityId"] = city.id
+        Log.d("CityScreen", "Tıklandı: ${city.name}")
+    }
 
+    fun clearQuery() = onQueryChange("")
+    fun search() = scheduleSearch(0)
+
+    private fun scheduleSearch(waitMillis: Long) {
         searchJob?.cancel()
-
-        if (searchText.isBlank()) {
-            _uiState.value = LoadState.Empty
+        val text = query.value.trim()
+        if (text.isEmpty()) {
+            _uiState.value = LoadState.Success(CityCatalog.apiCities)
             return
         }
-
         searchJob = viewModelScope.launch {
+            // Remove stale results while waiting for the next query.
             _uiState.value = LoadState.Loading
-
-            try {
-                val cities = repository.search(searchText)
-
-                _uiState.value = if (cities.isEmpty()) {
-                    LoadState.Empty
-                } else {
-                    LoadState.Success(cities)
-                }
+            delay(waitMillis)
+            _uiState.value = try {
+                val cities = repository.search(text, onlyTurkishProvinces.value)
+                if (cities.isEmpty()) LoadState.Empty else LoadState.Success(cities)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: IOException) {
-                _uiState.value =
-                    LoadState.Error("İnternet bağlantını kontrol et.")
+                LoadState.Error("İnternet bağlantını kontrol et.")
             } catch (e: HttpException) {
-                _uiState.value =
-                    LoadState.Error("Sunucu şu an cevap vermiyor.")
+                LoadState.Error("Sunucu şu an cevap vermiyor.")
             } catch (e: Exception) {
-                _uiState.value =
-                    LoadState.Error("Bir şeyler ters gitti. Tekrar dene.")
+                Log.e("CityViewModel", "Arama başarısız", e)
+                LoadState.Error("Bir şeyler ters gitti. Tekrar dene.")
             }
         }
     }
-
-    fun clearQuery() {
-        savedStateHandle["query"] = ""
-    }
-
-    private val repository = CityRepository()
-
-    private val _uiState =
-        MutableStateFlow<LoadState<List<ApiCity>>>(LoadState.Empty)
-
-    val uiState = _uiState.asStateFlow()  // _uiState viewModel in değiştirebildiği durum
-// uiState ekranın koruyabileceği durum
-
-    private var searchJob: Job? = null  // searchJob devam eden aramayı takip eder
 }
