@@ -5,8 +5,8 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.Text
 import com.kampplus.hava.ui.theme.HavaTheme
+import com.kampplus.hava.ui.city.CityScreen
 
 /**
  * Uygulamanın tek Activity'si; kullanıcının girdiği kapı.
@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
         // Süslü parantezin içi Compose dünyasıdır.
         setContent {
             HavaTheme {
-                Text("Merhaba Kamp!")
+                CityScreen()
             }
         }
     }

@@ -5,5 +5,5 @@
     -->
 
     <!-- Telefonun ana ekranında görünen uygulama adı. -->
-    <string name="app_name">Hava</string>
+    <string name="app_name">Hava.app</string>
 </resources>
