@@ -15,16 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
-
-@Composable
-fun CityScreen() {
     @Composable
     fun CityScreen(
         cityViewModel: CityViewModel = viewModel()
@@ -118,4 +112,3 @@ fun CityScreen() {
             }
         }
     }
-}
