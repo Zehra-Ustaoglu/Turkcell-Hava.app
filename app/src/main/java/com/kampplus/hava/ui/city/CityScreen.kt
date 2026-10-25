@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.TextButton
 
 @Composable
 fun CityScreen() {
@@ -62,19 +63,45 @@ fun CityScreen() {
             modifier = Modifier.padding(top = 12.dp)
         )
 
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)  // Listenin, başlık ve arama kutusundan kalan yüksekliği kullanmasını sağlar.
-                .padding(top = 12.dp)
-        ) {
-            items(filteredCities) { city ->
-                CityCard(
-                    name = city.name,
-                    plate = city.plate,
-                    onClick = {
-                        Log.d("CityClick", "Tıklandı: ${city.name}")
-                    }
+        if (filteredCities.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 32.dp)
+            ) {
+                Text(
+                    text = "Şehir bulunamadı",
+                    style = MaterialTheme.typography.titleMedium
                 )
+
+                Text(
+                    text = "Başka bir şehir adı veya plaka kodu dene.",
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+
+                TextButton(
+                    onClick = {
+                        query.value = ""
+                    }
+                ) {
+                    Text("Aramayı temizle")
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(top = 12.dp)
+            ) {
+                items(filteredCities) { city ->
+                    CityCard(
+                        name = city.name,
+                        plate = city.plate,
+                        onClick = {
+                            Log.d("CityClick", "Tıklandı: ${city.name}")
+                        }
+                    )
+                }
             }
         }
     }
