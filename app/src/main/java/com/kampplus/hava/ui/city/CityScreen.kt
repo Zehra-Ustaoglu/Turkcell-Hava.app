@@ -19,10 +19,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
 fun CityScreen() {
-    val query = remember { mutableStateOf("") }  // Başlangıçta boş olan, değiştiğinde ekranı güncelleyen bir değer oluşturur.
+    val query = rememberSaveable { mutableStateOf("") }
+    val selectedPlate = rememberSaveable { mutableStateOf<Int?>(null) }
+
     val searchText = query.value.trim()
 
     val filteredCities = CityCatalog.cities.filter { city ->
@@ -97,7 +100,9 @@ fun CityScreen() {
                     CityCard(
                         name = city.name,
                         plate = city.plate,
+                        isSelected = selectedPlate.value == city.plate,
                         onClick = {
+                            selectedPlate.value = city.plate
                             Log.d("CityClick", "Tıklandı: ${city.name}")
                         }
                     )

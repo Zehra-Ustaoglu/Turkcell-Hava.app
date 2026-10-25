@@ -17,11 +17,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.CardDefaults
 
 @Composable
-fun CityCard(name : String, plate : Int, onClick: () -> Unit) {
+fun CityCard(name : String, plate : Int, onClick: () -> Unit, isSelected: Boolean = false) {
     Card(
         onClick = onClick,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
+        ),
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
