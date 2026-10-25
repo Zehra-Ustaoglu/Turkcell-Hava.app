@@ -20,6 +20,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun CityScreen() {
@@ -102,7 +104,11 @@ fun CityScreen() {
                         plate = city.plate,
                         isSelected = selectedPlate.value == city.plate,
                         onClick = {
-                            selectedPlate.value = city.plate
+                            selectedPlate.value = if (selectedPlate.value == city.plate) {
+                                null
+                            } else {
+                                city.plate
+                            }
                             Log.d("CityClick", "Tıklandı: ${city.name}")
                         }
                     )

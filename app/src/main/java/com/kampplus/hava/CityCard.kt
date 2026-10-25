@@ -18,6 +18,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Icon
 
 @Composable
 fun CityCard(name : String, plate : Int, onClick: () -> Unit, isSelected: Boolean = false) {
@@ -41,6 +45,16 @@ fun CityCard(name : String, plate : Int, onClick: () -> Unit, isSelected: Boolea
         ) {
             PlateBadge(plate = plate)
             Text(text = name)
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Seçili şehir",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }
